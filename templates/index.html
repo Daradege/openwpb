@@ -4,69 +4,264 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='src/output.css') }}">
-    <title>Bale Bot Message Sender</title>
+    <style>
+        .sending-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .sending-message {
+            background: #1F2937;
+            padding: 20px;
+            border-radius: 10px;
+            color: #FCD34D;
+        }
+    </style>
+    
+    <title>Panel - OpenWPB</title>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full space-y-4">
-        <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" name="text" placeholder="Message text" required>
-        <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" name="to_id" placeholder="Recipient ID" required>
-        <div id="keyboard-builder" class="space-y-4">
+<body class="bg-gradient-to-br from-orange-900 to-gray-900 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full space-y-6 backdrop-blur-sm bg-opacity-95 border border-orange-700">
+        <h1 class="text-2xl font-bold text-orange-400 text-center mb-6">@{{ bot.get_me().first_name }} - {{ bot.get_me().id }}</h1>
+        
+        
+<div class="flex items-center space-x-2 mb-4">
+    <input type="checkbox" id="media-toggle" class="w-4 h-4 text-orange-600 bg-gray-700 border-orange-600 rounded focus:ring-orange-500">
+    <label for="media-toggle" class="text-orange-400">Send Media</label>
+</div>
+
+
+<div id="text-message-section">
+    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="text" name="text" placeholder="Message text" required>
+</div>
+
+<div id="media-section" class="hidden space-y-4">
+    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-800 file:text-orange-100 hover:file:bg-orange-700" 
+           type="file" 
+           name="media" 
+           id="media-file"
+           accept="image/*,video/*,application/*">
+    
+    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" 
+           type="text" 
+           name="caption" 
+           placeholder="Media caption (optional)">
+</div>
+
+        
+        
+        <div class="flex space-x-3">
+            <div class="relative flex-1">
+                <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-800 file:text-orange-100 hover:file:bg-orange-700" type="file" accept=".txt" id="recipients-file">
+            </div>
+            <button type="button" class="bg-orange-600 text-white py-3 px-6 rounded-xl hover:bg-orange-700 transition duration-200 shadow-sm hover:shadow-md font-medium" onclick="previewRecipients()">Preview</button>
         </div>
-        <div class="flex space-x-2">
-            <button type="button" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200" onclick="addButton()">Add Button</button>
-            <button type="button" class="bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition duration-200" onclick="addRow()">Add Row</button>
-            <button type="button" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition duration-200" onclick="removeLastButton()">Remove Button</button>
+        
+        <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="text" id="single-recipient" placeholder="Or enter single chat ID">
+        
+        <div id="recipients-preview" class="hidden max-h-40 overflow-y-auto border border-orange-600 rounded-xl p-4 bg-gray-700 text-orange-100 text-sm"></div>
+        
+        <div id="keyboard-builder" class="space-y-4"></div>
+        
+        <div class="flex flex-wrap gap-3">
+            <button type="button" class="flex-1 bg-orange-600 text-white py-3 px-4 rounded-xl hover:bg-orange-700 transition duration-200 shadow-sm hover:shadow-md font-medium" onclick="addButton()">Add Button</button>
+            <button type="button" class="flex-1 bg-orange-500 text-white py-3 px-4 rounded-xl hover:bg-orange-600 transition duration-200 shadow-sm hover:shadow-md font-medium" onclick="addRow()">Add Row</button>
+            <button type="button" class="flex-1 bg-orange-700 text-white py-3 px-4 rounded-xl hover:bg-orange-800 transition duration-200 shadow-sm hover:shadow-md font-medium" onclick="removeLastButton()">Remove Button</button>
         </div>
-        <div class="flex space-x-2">
-            <select id="keyboard-type" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="updateButtonOptions()">
-                <option value="inline">Inline Keyboard</option>
-                <option value="menu">Menu Keyboard</option>
-            </select>
-        </div>
+        
+        <select id="keyboard-type" class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" onchange="updateButtonOptions()">
+            <option value="inline">Inline Keyboard</option>
+            <option value="menu">Menu Keyboard</option>
+        </select>
+        
         <input type="hidden" name="components" id="components-data">
-        <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" name="reply_to" placeholder="Reply to message ID">
-        <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200" type="button" onclick="sendMessage()">Send Message</button>
+        <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="number" name="reply_to" placeholder="Reply to message ID">
+        
+        <button class="w-full bg-orange-500 text-white py-3 px-6 rounded-xl hover:bg-orange-600 transition duration-200 shadow-sm hover:shadow-md font-medium" type="button" onclick="sendBulkMessages()">Send Messages</button>
+        <button class="w-full bg-gray-600 text-white py-3 px-6 rounded-xl hover:bg-gray-700 transition duration-200 shadow-sm hover:shadow-md font-medium" type="button" onclick="clearResults()">Clear Results</button>
+        <button class="w-full bg-gray-600 text-white py-3 px-6 rounded-xl hover:bg-gray-700 transition duration-200 shadow-sm hover:shadow-md font-medium" type="button" onclick="logOut()">Logout</button>
+
+        
+        <div id="sending-progress" class="hidden space-y-3">
+            <div class="text-center text-orange-200 font-medium">Sending messages... <span id="progress-counter" class="text-orange-400">0/0</span></div>
+            <div class="w-full bg-gray-700 rounded-full h-3">
+                <div id="progress-bar" class="bg-orange-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div id="sending-results" class="hidden mt-6 border border-orange-600 rounded-xl p-6 bg-gray-700">
+            <h3 class="font-bold text-orange-400 mb-4">Results</h3>
+            <div class="space-y-2">
+                <p class="flex justify-between">
+                    <span class="text-orange-200">Successful:</span>
+                    <span id="success-count" class="font-medium text-orange-400">0</span>
+                </p>
+                <p class="flex justify-between">
+                    <span class="text-orange-200">Failed:</span>
+                    <span id="failed-count" class="font-medium text-red-400">0</span>
+                </p>
+            </div>
+            <div id="error-list" class="mt-4 text-sm text-red-400 space-y-1"></div>
+        </div>
     </div>
 
     <script>
-        function sendMessage() {
-            const text = document.querySelector('input[name="text"]').value;
-            const toId = document.querySelector('input[name="to_id"]').value;
-            const replyTo = document.querySelector('input[name="reply_to"]').value;
-            
-            prepareComponents();
-            const components = document.getElementById('components-data').value;
 
-            if (!text || !toId) {
-                alert('Please fill in required fields');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('text', text);
-            formData.append('to_id', toId);
-            if (components) formData.append('components', components);
-            if (replyTo) formData.append('reply_to', replyTo);
-
-            fetch("{{ url_for('manage', method='sendmessage', token=token) }}", {
+        function logOut() {
+            fetch('/logout', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                if (response.ok) {
+                    window.location.href = '/login';
+                } else {
+                    console.error('Failed to log out');
                 }
-                return response.json();
-            })
-            .then(data => {
-                alert('Message sent successfully!');
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to send message. Please try again.');
             });
         }
 
+        function clearResults() {
+            document.getElementById('sending-progress').classList.add('hidden');
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('progress-counter').textContent = '0/0';
+            
+            document.getElementById('sending-results').classList.add('hidden');
+            document.getElementById('success-count').textContent = '0';
+            document.getElementById('failed-count').textContent = '0';
+            document.getElementById('error-list').innerHTML = '';
+            
+            document.getElementById('sending-overlay').classList.add('hidden');
+        }
+        
+        async function previewRecipients() {
+            const fileInput = document.getElementById('recipients-file');
+            const previewDiv = document.getElementById('recipients-preview');
+            
+            if (fileInput.files.length === 0) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const text = await file.text();
+            const recipients = text.split(',').map(id => id.trim()).filter(id => /^\d+$/.test(id));
+
+            if (recipients.length === 0) {
+                alert('No valid recipient IDs found in file');
+                return;
+            }
+
+            previewDiv.innerHTML = `Found ${recipients.length} valid recipients:<br>${recipients.join(', ')}`;
+            previewDiv.classList.remove('hidden');
+        }
+
+        async function sendBulkMessages() {
+            const fileInput = document.getElementById('recipients-file');
+            const singleRecipient = document.getElementById('single-recipient').value.trim();
+            let recipients = [];
+
+            if (!singleRecipient && fileInput.files.length === 0) {
+                alert('Please either select a recipients file or enter a single chat ID');
+                return;
+            }
+
+            const mediaFile = document.getElementById('media-file').files[0];
+            const caption = document.querySelector('input[name="caption"]').value;
+            const text = document.querySelector('input[name="text"]').value;
+
+            if (!mediaFile && !text) {
+                alert('Please enter either message text or select a media file');
+                return;
+            }
+
+            if (singleRecipient) {
+                if (/^\d+$/.test(singleRecipient)) {
+                    recipients = [singleRecipient];
+                } else {
+                    alert('Please enter a valid chat ID');
+                    return;
+                }
+            } else {
+                const file = await fileInput.files[0].text();
+                recipients = file.split(',').map(id => id.trim()).filter(id => /^\d+$/.test(id));
+            }
+            
+            if (recipients.length === 0) {
+                alert('No valid recipient IDs found');
+                return;
+            }
+
+            prepareComponents();
+            const components = document.getElementById('components-data').value;
+            const replyTo = document.querySelector('input[name="reply_to"]').value;
+
+            document.getElementById('sending-progress').classList.remove('hidden');
+            document.getElementById('sending-results').classList.remove('hidden');
+            const progressBar = document.getElementById('progress-bar');
+            const progressCounter = document.getElementById('progress-counter');
+            const successCount = document.getElementById('success-count');
+            const failedCount = document.getElementById('failed-count');
+            const errorList = document.getElementById('error-list');
+
+            let successful = 0;
+            let failed = 0;
+            errorList.innerHTML = '';
+
+            for (let i = 0; i < recipients.length; i++) {
+                const formData = new FormData();
+                
+                if (mediaFile) {
+                    formData.append('media', mediaFile);
+                    formData.append('caption', caption || text);
+                    var endpoint = "{{ url_for('manage_media', method='media', token=token) }}";
+                } else {
+                    formData.append('text', text);
+                    var endpoint = "{{ url_for('manage', method='sendmessage', token=token) }}";
+                }
+
+                formData.append('to_id', recipients[i]);
+                if (components) formData.append('components', components);
+                if (replyTo) formData.append('reply_to', replyTo);
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    console.log(response);
+
+                    if (response.ok) {
+                        successful++;
+                    } else {
+                        failed++;
+                        errorList.innerHTML += `Failed to send to ID ${recipients[i]}<br>`;
+                    }
+                } catch (error) {
+                    failed++;
+                    errorList.innerHTML += `Error sending to ID ${recipients[i]}: ${error.message}<br>`;
+                }
+
+                const progress = ((i + 1) / recipients.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressCounter.textContent = `${i + 1}/${recipients.length}`;
+                successCount.textContent = successful;
+                failedCount.textContent = failed;
+            }
+        }
         function updateButtonOptions() {
             const keyboardType = document.getElementById('keyboard-type').value;
             const rows = document.querySelectorAll('.keyboard-row');
@@ -80,22 +275,22 @@
 
             if (keyboardType === 'inline') {
                 buttonDiv.innerHTML = `
-                    <select class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" onchange="toggleInputType(this)">
+                    <select class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100 mb-2" onchange="toggleInputType(this)">
                         <option value="url">URL</option>
                         <option value="web_app">Web App</option>
                         <option value="callback_data">Callback Data</option>
                     </select>
-                    <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" placeholder="Button Text" required>
-                    <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2" type="text" placeholder="URL/Link/Callback Data" required>
+                    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="text" placeholder="Button Text" required>
+                    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100 mt-2" type="text" placeholder="URL/Link/Callback Data" required>
                 `;
             } else {
                 buttonDiv.innerHTML = `
-                    <select class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+                    <select class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100 mb-2">
                         <option value="text">Text Only</option>
                         <option value="request_contact">Request Contact</option>
                         <option value="request_location">Request Location</option>
                     </select>
-                    <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" placeholder="Button Text" required>
+                    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="text" placeholder="Button Text" required>
                 `;
             }
             return buttonDiv;
@@ -107,7 +302,7 @@
             
             if (!row) {
                 row = document.createElement('div');
-                row.className = 'keyboard-row flex space-x-2';
+                row.className = 'keyboard-row flex space-x-3';
                 keyboardBuilder.appendChild(row);
             }
 
@@ -132,7 +327,7 @@
             const keyboardBuilder = document.getElementById('keyboard-builder');
             if (keyboardBuilder.children.length < 8) {
                 const row = document.createElement('div');
-                row.className = 'keyboard-row flex space-x-2';
+                row.className = 'keyboard-row flex space-x-3';
                 const buttonDiv = createButtonTemplate();
                 row.appendChild(buttonDiv);
                 keyboardBuilder.appendChild(row);
@@ -204,6 +399,23 @@
                 document.getElementById('components-data').value = '';
             }
         }
+        document.getElementById('media-toggle').addEventListener('change', function() {
+            const textSection = document.getElementById('text-message-section');
+            const mediaSection = document.getElementById('media-section');
+            
+            if (this.checked) {
+                textSection.classList.add('hidden');
+                mediaSection.classList.remove('hidden');
+                document.getElementsByName("text").value = '';
+            } else {
+                textSection.classList.remove('hidden');
+                mediaSection.classList.add('hidden');
+                document.getElementById('media-file').value = '';
+                document.getElementsByName('caption').value = '';
+            }
+        });
+        
     </script>
+    
 </body>
 </html>
