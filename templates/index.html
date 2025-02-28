@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='src/output.css') }}">
+    <title>Bale Bot Message Sender</title>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full space-y-4">
+        <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" name="text" placeholder="Message text" required>
+        <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" name="to_id" placeholder="Recipient ID" required>
+        <div id="keyboard-builder" class="space-y-4">
+        </div>
+        <div class="flex space-x-2">
+            <button type="button" class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200" onclick="addButton()">Add Button</button>
+            <button type="button" class="bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition duration-200" onclick="addRow()">Add Row</button>
+            <button type="button" class="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition duration-200" onclick="removeLastButton()">Remove Button</button>
+        </div>
+        <div class="flex space-x-2">
+            <select id="keyboard-type" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="updateButtonOptions()">
+                <option value="inline">Inline Keyboard</option>
+                <option value="menu">Menu Keyboard</option>
+            </select>
+        </div>
+        <input type="hidden" name="components" id="components-data">
+        <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="number" name="reply_to" placeholder="Reply to message ID">
+        <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200" type="button" onclick="sendMessage()">Send Message</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const text = document.querySelector('input[name="text"]').value;
+            const toId = document.querySelector('input[name="to_id"]').value;
+            const replyTo = document.querySelector('input[name="reply_to"]').value;
+            
+            prepareComponents();
+            const components = document.getElementById('components-data').value;
+
+            if (!text || !toId) {
+                alert('Please fill in required fields');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('text', text);
+            formData.append('to_id', toId);
+            if (components) formData.append('components', components);
+            if (replyTo) formData.append('reply_to', replyTo);
+
+            fetch("{{ url_for('manage', method='sendmessage', token=token) }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Message sent successfully!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send message. Please try again.');
+            });
+        }
+
+        function updateButtonOptions() {
+            const keyboardType = document.getElementById('keyboard-type').value;
+            const rows = document.querySelectorAll('.keyboard-row');
+            rows.forEach(row => row.remove());
+        }
+
+        function createButtonTemplate() {
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'flex-1';
+            const keyboardType = document.getElementById('keyboard-type').value;
+
+            if (keyboardType === 'inline') {
+                buttonDiv.innerHTML = `
+                    <select class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" onchange="toggleInputType(this)">
+                        <option value="url">URL</option>
+                        <option value="web_app">Web App</option>
+                        <option value="callback_data">Callback Data</option>
+                    </select>
+                    <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" placeholder="Button Text" required>
+                    <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2" type="text" placeholder="URL/Link/Callback Data" required>
+                `;
+            } else {
+                buttonDiv.innerHTML = `
+                    <select class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+                        <option value="text">Text Only</option>
+                        <option value="request_contact">Request Contact</option>
+                        <option value="request_location">Request Location</option>
+                    </select>
+                    <input class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" type="text" placeholder="Button Text" required>
+                `;
+            }
+            return buttonDiv;
+        }
+
+        function addButton() {
+            const keyboardBuilder = document.getElementById('keyboard-builder');
+            let row = document.querySelector('.keyboard-row:last-child');
+            
+            if (!row) {
+                row = document.createElement('div');
+                row.className = 'keyboard-row flex space-x-2';
+                keyboardBuilder.appendChild(row);
+            }
+
+            if (row.children.length < 8) {
+                row.appendChild(createButtonTemplate());
+            } else {
+                alert('Maximum 8 buttons per row allowed');
+            }
+        }
+
+        function removeLastButton() {
+            const row = document.querySelector('.keyboard-row:last-child');
+            if (row && row.children.length > 0) {
+                row.removeChild(row.lastChild);
+                if (row.children.length === 0) {
+                    row.remove();
+                }
+            }
+        }
+
+        function addRow() {
+            const keyboardBuilder = document.getElementById('keyboard-builder');
+            if (keyboardBuilder.children.length < 8) {
+                const row = document.createElement('div');
+                row.className = 'keyboard-row flex space-x-2';
+                const buttonDiv = createButtonTemplate();
+                row.appendChild(buttonDiv);
+                keyboardBuilder.appendChild(row);
+            } else {
+                alert('Maximum 8 rows allowed');
+            }
+        }
+
+        function toggleInputType(select) {
+            const inputContainer = select.parentElement;
+            const valueInput = inputContainer.children[2];
+            const placeholder = select.value === 'callback_data' ? 'Callback Data' : 
+                              select.value === 'web_app' ? 'Web App URL' : 'URL';
+            valueInput.placeholder = placeholder;
+        }
+
+        function prepareComponents() {
+            const rows = document.querySelectorAll('.keyboard-row');
+            const keyboard = [];
+            const keyboardType = document.getElementById('keyboard-type').value;
+
+            rows.forEach(row => {
+                const buttonsInRow = [];
+                const buttons = row.children;
+
+                for (const buttonDiv of buttons) {
+                    const select = buttonDiv.querySelector('select');
+                    const textInput = buttonDiv.querySelector('input:nth-child(2)');
+                    
+                    if (keyboardType === 'inline') {
+                        const valueInput = buttonDiv.querySelector('input:nth-child(3)');
+                        if (textInput.value && valueInput.value) {
+                            const button = {
+                                text: textInput.value.trim()
+                            };
+                            if (select.value === 'web_app') {
+                                button[select.value] = { url: valueInput.value.trim() };
+                            } else {
+                                button[select.value] = valueInput.value.trim();
+                            }
+                            buttonsInRow.push(button);
+                        }
+                    } else {
+                        if (textInput.value) {
+                            const button = {
+                                text: textInput.value.trim()
+                            };
+                            if (select.value === 'request_contact') {
+                                button.request_contact = true;
+                            } else if (select.value === 'request_location') {
+                                button.request_location = true;
+                            }
+                            buttonsInRow.push(button);
+                        }
+                    }
+                }
+
+                if (buttonsInRow.length > 0) {
+                    keyboard.push(buttonsInRow);
+                }
+            });
+
+            if (keyboard.length > 0) {
+                const keyboardData = keyboardType === 'inline' 
+                    ? { inline_keyboard: keyboard }
+                    : { keyboard: keyboard };
+                document.getElementById('components-data').value = JSON.stringify(keyboardData);
+            } else {
+                document.getElementById('components-data').value = '';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='src/output.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Token - OpenWPB</title>
+</head>
+<body class="bg-gray-100">
+    {% if error %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 max-w-md mx-auto mt-4" role="alert">
+        <strong class="font-bold">Error!</strong>
+        <span class="block sm:inline">{{ error }}</span>
+    </div>
+    {% endif %}
+    <div class="flex h-screen">
+        <div class="m-auto bg-white p-8 rounded-lg shadow-md w-96">
+            <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Welcome to OpenWPB</h1>
+            <p class="text-gray-600 mb-6 text-center">Please enter your bot token to continue</p>
+            <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
+                <div class="relative">
+                    <input type="text" 
+                           name="token" 
+                           placeholder="Enter token" 
+                           class="border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <button type="submit" 
+                        class="bg-blue-500 text-white px-4 py-3 rounded-lg w-full hover:bg-blue-600 transform hover:scale-105 transition duration-200 ease-in-out font-semibold">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
