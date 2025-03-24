@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='src/output.css') }}">
     <style>
+        textarea, input {
+            font-family: Vazirmatn;
+        }
         .sending-overlay {
             position: fixed;
             top: 0;
@@ -40,7 +44,7 @@
 
 
 <div id="text-message-section">
-    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="text" name="text" placeholder="Message text" required title="Enter the text message you want to send">
+    <textarea class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" type="text" name="text" placeholder="Message text" required title="Enter the text message you want to send" dir="auto"></textarea>
 </div>
 
 <div id="media-section" class="hidden space-y-4">
@@ -51,11 +55,12 @@
            accept="image/*,video/*,application/*"
            title="Select media file to send (images, videos, or documents)">
     
-    <input class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" 
+    <textarea class="w-full px-4 py-3 border border-orange-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200 bg-gray-700 text-orange-100" 
            type="text" 
            name="caption" 
            placeholder="Media caption (optional)"
-           title="Add a caption to your media file">
+           title="Add a caption to your media file"
+           dir="auto"></textarea>
 </div>
 
         
@@ -182,8 +187,8 @@
             }
 
             const mediaFile = document.getElementById('media-file').files[0];
-            const caption = document.querySelector('input[name="caption"]').value;
-            const text = document.querySelector('input[name="text"]').value;
+            const caption = document.querySelector('textarea[name="caption"]').value;
+            const text = document.querySelector('textarea[name="text"]').value;
 
             if (!mediaFile && !text) {
                 alert('Please enter either message text or select a media file');
